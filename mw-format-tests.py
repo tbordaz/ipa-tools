@@ -66,7 +66,8 @@ def unparse_param(param, value):
         else:
             return '{%s}' % ','.join(unparse_param(param, v) for v in value)
     elif type(param) in (parameters.StrEnum, parameters.Str,
-                       parameters.DNParam, DNOrURL, parameters.Int):
+                       parameters.DNParam, DNOrURL, parameters.Int,
+		       parameters.IA5Str, parameters.DateTime):
         return shell_quote(unicode(value))
     elif type(param) in (parameters.Flag, ):
         return None
@@ -131,7 +132,10 @@ def get_commandline(cmd_tuple):
     for varg, oarg in zip(args, command.args()):
         commandline_parts.append(unparse_param(oarg, varg))
     for oname, ovalue in opts.items():
-        oopt = command.options[oname]
+	try:
+		oopt = command.options[oname]
+	except KeyError:
+		pass
         pval = unparse_param(oopt, ovalue)
         if pval is None:
             commandline_parts.append('--%s' % oopt.cli_name)
@@ -216,7 +220,7 @@ def make_wikitests(declarative_test_class, run=False, permission_acishow=False):
 
         default_template = NOCLI_TEMPLATE if command.NO_CLI else DEFAULT_TEMPLATE
         yield TEMPLATES.get((cmd_name, success), default_template).format(
-            name=test['desc'].partition(' #(')[0],
+            name=test['desc'].partition(' #(')[0].replace("=", "&#61;"),
             actions=get_commandline(test['command']),
             results=result,
             cmd_name=cmd_name,
